@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: koc
+      POSTGRES_PASSWORD: koc
+      POSTGRES_DB: koc
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U koc"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://koc:koc@db:5432/koc
+      DATA_SOURCE: tiktok_oembed       # dữ liệu THẬT (công khai); tự fallback mock nếu mất mạng
+      SEED_FALLBACK_SOURCE: mock
+      CORS_ORIGINS: http://localhost:5173
+    ports: ["8000:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
